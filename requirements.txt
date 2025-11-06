@@ -1,6 +1,6 @@
 # pip reqquirements | Python 3.10.19
 pandas
-numpy<1.25
+numpy<=1.26
 matplotlib
 seaborn
 scikit-learn
