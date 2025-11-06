@@ -1,6 +1,6 @@
 # pip reqquirements | Python 3.10.19
 pandas
-numpy
+numpy<1.25
 matplotlib
 seaborn
 scikit-learn
@@ -8,3 +8,5 @@ secedgar
 edgartools
 python-dotenv
 statsmodels
+utilsforecast
+statsforecast
