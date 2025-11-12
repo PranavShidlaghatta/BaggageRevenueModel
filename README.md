@@ -19,7 +19,7 @@ The objective of this project is forecasting quarterly baggage revenue of Southw
 
 2. cd BaggageRevenueModel
 
-3. conda create --name "<your-env>" python=3.10.19
+3. conda create --name "your-env" python==3.10.19
 
 4. pip install -r requirements.txt
 
