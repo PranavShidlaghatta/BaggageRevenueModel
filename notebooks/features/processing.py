@@ -10,8 +10,6 @@ def quarter_standardize(df, date="Date", month="Month", format_used="%B %Y"):
     df = df.sort_values("Date").reset_index(drop=True)
     return df
 
-def 
-
 # %%
 '''
 NOTE: JET FUEL PORTION. 
@@ -27,6 +25,11 @@ jet_fuel["Price (cents per gallon)"] = (jet_fuel["Price (cents per gallon)"]
                                         .astype(float)
                                         )
 jet_fuel.head()
+
+# %%
+
+jet_fuel_q = jet_fuel.groupby("Quarter").agg({"Price (cents per gallon)": "mean"}).reset_index()
+jet_fuel_q.head()
 
 
 # %%
@@ -49,20 +52,5 @@ unemp.head()
 
 # %%
 
-'''
-NOTE: GDP 
-'''
-
-gdp = pd.read_csv(r"/home/rayan/Southwest_stuff/BaggageRevenueModel/data/GDP_per_capita 1960-2024.csv")
-
-gdp.head()
-
-# %%
-
-# print(gdp["Country Name"].tolist())
-
-print("United States" in gdp["Country Name"].tolist())
-
-us_row = gdp[gdp['Country Name'] == "United States"]
-
-us_row
+unemp_q = unemp.groupby("Quarter").agg({"Total": "mean"}).reset_index()
+unemp_q.head()
