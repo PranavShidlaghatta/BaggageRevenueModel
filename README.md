@@ -2,9 +2,18 @@
 
 Predicting the Baggage Revenue of Southwest Airlines.
 
+
 ## Description
 
 The objective of this project is forecasting quarterly baggage revenue of Southwest Airlines using BTS data from the last 10 years. Various models such as - Naive Seasonal, ARIMA, SARIMA have been trained on the data to capture trends in the data.
+
+## Datasets
+
+US Jet Fuel Price Data: https://www.bts.gov/browse-statistical-products-and-data/freight-facts-and-figures/diesel-and-jet-fuel-prices 
+
+US Unemployment Data:https://www.bls.gov/charts/employment-situation/civilian-unemployment-rate.htm
+
+GDP per Capita of all countries: https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=US 
 
 ## Getting Started
 
@@ -86,10 +95,6 @@ Github: https://github.com/pixelated-explorer
 LinkedIn: https://www.linkedin.com/in/rayan-mohammed-5a55bb255/
 
 
-## Version History
-
-TODO
-
 ## License
 
 TBD
@@ -97,4 +102,6 @@ TBD
 ## Acknowledgments
 
 * [Bureau of Transportation Statistics](https://www.transtats.bts.gov/)
+* [Bureau of Labor Statistics](https://www.bls.gov)
 * [StatsForecast Library](https://github.com/Nixtla/statsforecast)
+* [World Bank](https://data.worldbank.org/)
