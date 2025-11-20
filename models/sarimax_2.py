@@ -120,33 +120,137 @@ def calculate_forecast_metrics(y_true, y_pred):
     
     return mae, rmse, mape
 
+def sarimax_no_exog_fit_predict(series, forecast_periods=16, plot_title="SARIMAX (No Exogenous Variables)", test_actuals=None):
+    """
+    Fit and forecast a SARIMAX model without exogenous variables, optionally print metrics before plotting.
+    """
+
+    import pmdarima as pm
+    import matplotlib.pyplot as plt
+    import pandas as pd
+
+    # Fit SARIMAX with no exogenous factors
+    model = pm.auto_arima(
+        series, 
+        seasonal=True,
+        m=4,  # Quarterly
+        trace=True,
+        error_action='ignore',
+        suppress_warnings=True,
+        stepwise=True,
+        information_criterion='aic',
+        n_jobs=-1
+    )
+
+    # Forecast
+    index_of_fc = pd.date_range(
+        series.index[-1].to_timestamp() + pd.DateOffset(months=3),
+        periods=forecast_periods,
+        freq='QS'
+    )
+    fitted, conf_int = model.predict(n_periods=forecast_periods, return_conf_int=True)
+
+    # Compute metrics if test_actuals are provided
+    if test_actuals is not None:
+        y_pred = fitted if hasattr(fitted, 'values') else np.array(fitted)
+        y_true = test_actuals
+        mae, rmse, mape = calculate_forecast_metrics(y_true, y_pred)
+
+    forecast_df = pd.DataFrame({
+        'Quarter': index_of_fc,
+        'Forecast': fitted,
+        'Lower_CI': conf_int[:, 0],
+        'Upper_CI': conf_int[:, 1]
+    })
+    return model, forecast_df
+
+
+# def main():
+#     # Load data
+#     df = load_and_format(r'C:\Users\Nav\Documents\BaggageRevenueModels\BaggageRevenueModel\data\combined_bag_revenue_exog.csv')
+    
+#     # Filter for Southwest Airlines only
+#     airline = 'Southwest'
+#     airline_df = df[df['unique_id'] == airline].copy()
+#     airline_df.set_index('ds', inplace=True)
+#     airline_df.index = airline_df.index.to_period('Q')
+    
+#     # Exogenous variable columns
+#     exog_cols = ['GDP', 'jetfuel_cost'] #, 'unemployment_rate'
+#     exog_variables = airline_df[exog_cols]
+    
+#     # Fit SARIMAX model
+#     sarimax_model = sarimax_fit(airline_df['y'], exog_variables)
+    
+#     # Print model summary
+#     print(f"\n{airline} Model Summary:")
+#     print(sarimax_model.summary())
+    
+#     # Generate forecast for 8 quarters
+#     forecast_df = sarimax_forecast(airline_df, sarimax_model, airline, exog_cols, periods=8)
+#     print(f"COMPLETED: Successfully processed {airline}")
+    
+#     return sarimax_model, forecast_df
+
+
+# if __name__ == "__main__":
+#     model, forecast = main()
+
 def main():
     # Load data
     df = load_and_format(r'C:\Users\Nav\Documents\BaggageRevenueModels\BaggageRevenueModel\data\combined_bag_revenue_exog.csv')
-    
-    # Filter for Southwest Airlines only
+
     airline = 'Southwest'
     airline_df = df[df['unique_id'] == airline].copy()
-    airline_df.set_index('ds', inplace=True)
-    airline_df.index = airline_df.index.to_period('Q')
-    
-    # Exogenous variable columns
-    exog_cols = ['GDP', 'jetfuel_cost', 'unemployment_rate']
-    exog_variables = airline_df[exog_cols]
-    
-    # Fit SARIMAX model
-    sarimax_model = sarimax_fit(airline_df['y'], exog_variables)
-    
-    # Print model summary
-    print(f"\n{airline} Model Summary:")
-    print(sarimax_model.summary())
-    
-    # Generate forecast for 8 quarters
-    forecast_df = sarimax_forecast(airline_df, sarimax_model, airline, exog_cols, periods=8)
-    print(f"COMPLETED: Successfully processed {airline}")
-    
-    return sarimax_model, forecast_df
+    if airline_df.empty:
+        print(f"Error: {airline} not found in dataset!")
+        return None, None
 
+    # Set datetime index and convert to quarterly period
+    airline_df = airline_df.set_index('ds')
+    airline_df.index = airline_df.index.to_period('Q')
+    y = airline_df['y']
+
+    # Use last n quarters for testing
+    forecast_periods = 8
+    y_train = y.iloc[:-forecast_periods]
+    y_test = y.iloc[-forecast_periods:]
+
+    # 1. SARIMAX WITHOUT exogenous factors
+    print(f"\nTraining range: {y_train.index.min()} to {y_train.index.max()}")
+    print(f"Testing range: {y_test.index.min()} to {y_test.index.max()}")
+    model_no_exog, forecast_no_exog_df = sarimax_no_exog_fit_predict(
+        y_train,
+        forecast_periods=forecast_periods,
+        plot_title="SARIMAX (No Exogenous Variables)"
+    )
+    y_pred_no_exog = forecast_no_exog_df['Forecast'].values
+    print(f"\nForecast evaluation for {airline} (no exogenous features):")
+    _, _, mape_no_exog = calculate_forecast_metrics(y_test.values, y_pred_no_exog)
+    print(f"MAPE without exogenous variables: {mape_no_exog:.2f}%")
+
+    # 2. SARIMAX WITH exogenous factors
+    exog_cols = ['GDP', 'jetfuel_cost', 'unemployment_rate']  # or your desired columns
+    exog_train = airline_df[exog_cols].iloc[:-forecast_periods]
+    exog_test = airline_df[exog_cols].iloc[-forecast_periods:]
+
+    sarimax_model_exog = sarimax_fit(y_train, exog_train)
+    # build test forecast with exogenous variables
+    index_of_fc = pd.date_range(
+        y_train.index[-1].to_timestamp() + pd.DateOffset(months=3),
+        periods=forecast_periods,
+        freq='QS'
+    )
+    y_pred_exog, confint = sarimax_model_exog.predict(
+        n_periods=forecast_periods,
+        return_conf_int=True,
+        exogenous=exog_test.values
+    )
+    print(f"\nForecast evaluation for {airline} (with exogenous variables):")
+    _, _, mape_exog = calculate_forecast_metrics(y_test.values, y_pred_exog)
+    print(f"MAPE with exogenous variables: {mape_exog:.2f}%")
+
+    return (model_no_exog, forecast_no_exog_df), (sarimax_model_exog, y_pred_exog)
 
 if __name__ == "__main__":
-    model, forecast = main()
+    (_, forecast_no_exog), (_, forecast_exog) = main()
