@@ -28,7 +28,7 @@ def sarimax_fit(y, exog):
         max_p=3, max_q=3, m=4,  # Quarterly seasonality
         start_P=0, seasonal=True,
         max_P=3, max_Q=3,
-        d=None, D=1,
+        d=None, D=0,
         trace=True,
         error_action='ignore',
         suppress_warnings=True,
@@ -164,38 +164,6 @@ def sarimax_no_exog_fit_predict(series, forecast_periods=16, plot_title="SARIMAX
         'Upper_CI': conf_int[:, 1]
     })
     return model, forecast_df
-
-
-# def main():
-#     # Load data
-#     df = load_and_format(r'C:\Users\Nav\Documents\BaggageRevenueModels\BaggageRevenueModel\data\combined_bag_revenue_exog.csv')
-    
-#     # Filter for Southwest Airlines only
-#     airline = 'Southwest'
-#     airline_df = df[df['unique_id'] == airline].copy()
-#     airline_df.set_index('ds', inplace=True)
-#     airline_df.index = airline_df.index.to_period('Q')
-    
-#     # Exogenous variable columns
-#     exog_cols = ['GDP', 'jetfuel_cost'] #, 'unemployment_rate'
-#     exog_variables = airline_df[exog_cols]
-    
-#     # Fit SARIMAX model
-#     sarimax_model = sarimax_fit(airline_df['y'], exog_variables)
-    
-#     # Print model summary
-#     print(f"\n{airline} Model Summary:")
-#     print(sarimax_model.summary())
-    
-#     # Generate forecast for 8 quarters
-#     forecast_df = sarimax_forecast(airline_df, sarimax_model, airline, exog_cols, periods=8)
-#     print(f"COMPLETED: Successfully processed {airline}")
-    
-#     return sarimax_model, forecast_df
-
-
-# if __name__ == "__main__":
-#     model, forecast = main()
 
 def main():
     # Load data
