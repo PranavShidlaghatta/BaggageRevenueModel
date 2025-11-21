@@ -7,6 +7,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 from statsmodels.tsa.stattools import adfuller
 import pmdarima as pm
 from statsmodels.tsa.seasonal import seasonal_decompose
+from sklearn.preprocessing import MinMaxScaler
 
 
 def load_and_format(path):
@@ -229,26 +230,60 @@ def main():
     _, _, mape_no_exog = calculate_forecast_metrics(y_test.values, y_pred_no_exog)
     print(f"MAPE without exogenous variables: {mape_no_exog:.2f}%")
 
-    # 2. SARIMAX WITH exogenous factors
+    # 2. SARIMAX WITH exogenous factors (MinMax scaled)
     exog_cols = ['GDP', 'jetfuel_cost', 'unemployment_rate']  # or your desired columns
-    exog_train = airline_df[exog_cols].iloc[:-forecast_periods]
-    exog_test = airline_df[exog_cols].iloc[-forecast_periods:]
+    exog_train = airline_df[exog_cols].iloc[:-forecast_periods].dropna()  # Clean NaNs
+    exog_test = airline_df[exog_cols].iloc[-forecast_periods:].dropna()  # Clean NaNs
 
-    sarimax_model_exog = sarimax_fit(y_train, exog_train)
-    # build test forecast with exogenous variables
+    # MinMax scale only exogenous factors
+    scaler = MinMaxScaler()
+    exog_train_scaled = pd.DataFrame(
+        scaler.fit_transform(exog_train),
+        columns=exog_cols,
+        index=exog_train.index  # Preserve index
+    )
+    exog_test_scaled = pd.DataFrame(
+        scaler.transform(exog_test),
+        columns=exog_cols,
+        index=exog_test.index  # Preserve index
+    )
+
+    # Align y_train to scaled exog (if NaN cleaning dropped rows)
+    common_idx = exog_train_scaled.index.intersection(y_train.index)
+    y_train_aligned = y_train.loc[common_idx]
+    exog_train_scaled = exog_train_scaled.loc[common_idx]
+
+    # Quick diagnostics (optional: verify scaling and variation)
+    print(f"\nExog train shape after MinMax scaling: {exog_train_scaled.shape} (should match y_train: {len(y_train_aligned)})")
+    print(f"Exog test shape after MinMax scaling: {exog_test_scaled.shape} (should be {forecast_periods})")
+    print(f"Sample exog_test_scaled (range [0,1]):\n{exog_test_scaled.head()}")
+    print(f"Exog test variation (std >0 indicates signal):\n{exog_test_scaled.describe().loc['std']}")
+
+    # Fit SARIMAX with scaled exog
+    sarimax_model_exog = sarimax_fit(y_train_aligned, exog_train_scaled)
+
+    # Build test forecast with scaled exogenous variables
     index_of_fc = pd.date_range(
-        y_train.index[-1].to_timestamp() + pd.DateOffset(months=3),
+        y_train_aligned.index[-1].to_timestamp() + pd.DateOffset(months=3),
         periods=forecast_periods,
         freq='QS'
     )
     y_pred_exog, confint = sarimax_model_exog.predict(
         n_periods=forecast_periods,
         return_conf_int=True,
-        exogenous=exog_test.values
+        exogenous=exog_test_scaled.values  # Use scaled test exog
     )
-    print(f"\nForecast evaluation for {airline} (with exogenous variables):")
-    _, _, mape_exog = calculate_forecast_metrics(y_test.values, y_pred_exog)
-    print(f"MAPE with exogenous variables: {mape_exog:.2f}%")
+
+    # Align y_test if needed (unlikely, but for completeness)
+    y_test_aligned = y_test.loc[exog_test_scaled.index] if len(exog_test_scaled) < len(y_test) else y_test
+
+    print(f"\nForecast evaluation for {airline} (with MinMax scaled exogenous variables):")
+    _, _, mape_exog = calculate_forecast_metrics(y_test_aligned.values, y_pred_exog)
+    print(f"MAPE with MinMax scaled exogenous variables: {mape_exog:.2f}%")
+
+    # Optional: Compare predictions to baseline
+    pred_diff = np.mean(np.abs(y_pred_exog - y_pred_no_exog[:len(y_pred_exog)]))
+    print(f"Mean absolute difference in predictions (exog vs. no-exog): {pred_diff:.2f} (higher = exog influencing)")
 
     return (model_no_exog, forecast_no_exog_df), (sarimax_model_exog, y_pred_exog)
 
