@@ -12,3 +12,4 @@ utilsforecast
 statsforecast
 pmdarima
 shap
+xgboost
