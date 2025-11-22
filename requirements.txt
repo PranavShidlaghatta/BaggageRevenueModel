@@ -10,3 +10,5 @@ python-dotenv
 statsmodels
 utilsforecast
 statsforecast
+pmdarima
+shap
