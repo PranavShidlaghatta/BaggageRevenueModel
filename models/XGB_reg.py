@@ -16,6 +16,9 @@ df['y'] = np.log1p(df['y'])
 
 df['ds'] = pd.to_datetime(df['ds'])
 
+# index out southwest 
+df = df[df["unique_id"] == "Southwest"]
+
 def create_lag_features(df, group_col, target, lags):
     for lag in lags:
         df[f"{target}_lag{lag}"] = df.groupby(group_col)[target].shift(lag)
@@ -46,6 +49,7 @@ df = create_lag_features(df, "unique_id", "y", lags=[1,2,4,8])
 df = create_rolling_features(df, "unique_id", "y", windows=[4,8])
 df = create_lagged_exogenous(df, "unique_id",
                              ["jetfuel_cost", "unemployment_rate", "GDP"])
+df.head()
 
 df = df.dropna()
 
@@ -83,7 +87,7 @@ feature_cols_jetfuel_only = [c for c in feature_cols if c not in exog_cols + exo
 
 
 # Update feature cols to choose the corresponding model
-feature_cols = feature_cols_no_exog
+# feature_cols = feature_cols_no_exog
 
 param_grid = {
     'n_estimators': [100, 300, 500],
@@ -124,7 +128,8 @@ rmse_orig = root_mean_squared_error(y_true_orig, y_pred_orig)
 print(f"MAE (original scale): {mae_orig:.2f}")
 print(f"RMSE (original scale): {rmse_orig:.2f}")
 
-mape = (np.abs((test["y"] - y_pred) / np.where(test["y"] == 0, np.nan, test["y"]))).mean() * 100
+# mape = (np.abs((test["y"] - y_pred) / np.where(test["y"] == 0, np.nan, test["y"]))).mean() * 100
+mape = (np.abs((y_true_orig - y_pred_orig) / np.where(y_true_orig == 0, np.nan, y_true_orig))).mean() * 100
 print(f"MAPE: {mape:.2f}%")
 
 
@@ -141,3 +146,4 @@ shap.summary_plot(shap_values, train[feature_cols], plot_type="bar")
 
 # %%
 shap.summary_plot(shap_values, train[feature_cols])
+

@@ -1,3 +1,4 @@
+
 # Baggage Revenue Model
 
 Predicting the Baggage Revenue of Southwest Airlines.
@@ -32,52 +33,25 @@ GDP per Capita of all countries: https://data.worldbank.org/indicator/NY.GDP.PCA
 
 4. pip install -r requirements.txt
 
+### models
 
-### Executing program
+consists of models in sarimax.py and XBG_reg.py. 
+Final chosen model is sarimax.py. 
 
-1. Create a data folder and add combined_bag_revenue.csv to it.
+models/saved models consists of pickled model files. 
 
-2. Open bag_rev_eda.ipynb and run all cells to perform eda on the BTS data:
+#### models/notebooks 
 
-You will be able to analyze the baggage revenue by quarter only for Soutwest Airlines in this plot:
+Within each notebook, you may need to change the paths to the datasets. Each dataset will be found in the 
+/data folder. 
 
-<p align="left">
-  <img src="plots/Baggage%20Revenue%20by%20Quarter%20-%20SW.png"
-       alt="Baggage Revenue By Quarter - SW"
-       width="800" />
-</p>
-
-This plot shows the baggage revenue by quarter of all major airlines over the last 10 years:
-
-<p align="left">
-  <img src="plots/Baggage%20Revenue%20by%20Quarter.png"
-       alt="Baggage Revenue By Quarter"
-       width="800" />
-</p>
-
-To take a closer look at the data, we can decompose the data into trend and seasonality.
-<p align="left">
-  <img src="plots/Baggage Revenue Decomposition.png"
-       alt="Baggage Revenue Decomposition"
-       width="800" />
-</p>
-
-Conclusions from EDA: 
-- There is a clear seasonal pattern in the data.
-- There is a significant dip in the baggage revenue by quarter during the COVID years.
-- The data has non-constant variance
-
-3. Open bag_rev_forecast.ipynb and run all cells.
-
-<p align="left">
-  <img src="plots/models_vs_y.png"
-       alt="ARIMA, SARIMA, and SeasonalNaive model performance plot"
-       width="800" />
-</p>
-
-
-Current state of the Models and Takeaways:
-The curves of all three models relatively follow the same pattern as the actual baggage revenues. However, the parameters such as window size need to be adjusted to enhance the predictions. We also need to account for exogenous factors (such as COVID). Apply log transform or Box-Cox transform to mitigate the impact of the huge dip. This would reduce the heteroscedasticity, allowing models like ARIMA and SARIMA to perform better.
+- bag_rev_eda.ipynb entails exploratory data analysis of the baggage revenue dataset. 
+- combined_bag_rev_csv.ipynb created the initial dataset 
+- linear_model.ipynb creates an exploratory linear model on NPS 
+- bag_rev_forecast.ipynb runs forecast models on the baggage revenue dataset without transformation. 
+- imputation_main.ipynb was the original file to create the reindexed dataset. 
+- bag_rev_forecast_reindexed.ipynb runs ARIMA/SARIMA models on the reindexed dataset. 
+- exog_processing.ipynb creates a reindexed dataset with exogenous factors. 
 
 
 ## Authors
