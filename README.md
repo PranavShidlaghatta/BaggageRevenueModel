@@ -1,4 +1,4 @@
-```
+
 # Baggage Revenue Model
 
 Predicting the Baggage Revenue of Southwest Airlines.
@@ -79,5 +79,3 @@ TBD
 * [Bureau of Labor Statistics](https://www.bls.gov)
 * [StatsForecast Library](https://github.com/Nixtla/statsforecast)
 * [World Bank](https://data.worldbank.org/)
-
-```
