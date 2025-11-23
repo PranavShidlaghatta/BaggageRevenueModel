@@ -38,8 +38,6 @@ GDP per Capita of all countries: https://data.worldbank.org/indicator/NY.GDP.PCA
 consists of models in sarimax.py and XBG_reg.py. 
 Final chosen model is sarimax.py. 
 
-models/saved models consists of pickled model files. 
-
 #### models/notebooks 
 
 Within each notebook, you may need to change the paths to the datasets. Each dataset will be found in the 
@@ -79,3 +77,4 @@ TBD
 * [Bureau of Labor Statistics](https://www.bls.gov)
 * [StatsForecast Library](https://github.com/Nixtla/statsforecast)
 * [World Bank](https://data.worldbank.org/)
+
