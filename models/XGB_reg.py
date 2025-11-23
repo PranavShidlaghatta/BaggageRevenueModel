@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler, RobustScaler
 from sklearn.model_selection import GridSearchCV
 from xgboost import XGBRegressor
-from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_absolute_error, root_mean_squared_error
 import shap 
 
 
@@ -69,7 +69,21 @@ train[scale_cols] = scaler.fit_transform(train[scale_cols])
 valid[scale_cols] = scaler.transform(valid[scale_cols])
 test[scale_cols]  = scaler.transform(test[scale_cols])
 
+# All exog
 feature_cols = [c for c in df.columns if c not in ["y", "ds", "unique_id"]]
+
+# No exog
+exog_cols = ["jetfuel_cost", "unemployment_rate", "GDP"]
+exog_lag_cols = [f"{col}_lag{lag}" for col in exog_cols for lag in [1, 4]]
+feature_cols_no_exog = [c for c in feature_cols if c not in exog_cols + exog_lag_cols]
+
+# Just jetfuel 
+jetfuel_cols = [c for c in feature_cols if "jetfuel" in c]
+feature_cols_jetfuel_only = [c for c in feature_cols if c not in exog_cols + exog_lag_cols] + jetfuel_cols
+
+
+# Update feature cols to choose the corresponding model
+feature_cols = feature_cols_no_exog
 
 param_grid = {
     'n_estimators': [100, 300, 500],
@@ -98,17 +112,17 @@ print("Best parameters found:", grid_search.best_params_)
 
 best_model = grid_search.best_estimator_
 
-# Optionally, retrain on all train+valid data for final test
-# concat_trainvalid = pd.concat([train, valid])
-# best_model.fit(concat_trainvalid[feature_cols], concat_trainvalid["y"])
-# y_pred = best_model.predict(test[feature_cols])
-
-# Use best model on your hold-out test set
 y_pred = best_model.predict(test[feature_cols])
 
-# --- Calculate MAE and MAPE ---
-mae = mean_absolute_error(test["y"], y_pred)
-print(f"MAE: {mae:.2f}")
+# Calculate MAE and MAPE 
+
+y_true_orig = np.expm1(test["y"])
+y_pred_orig = np.expm1(y_pred)
+
+mae_orig = mean_absolute_error(y_true_orig, y_pred_orig)
+rmse_orig = root_mean_squared_error(y_true_orig, y_pred_orig)
+print(f"MAE (original scale): {mae_orig:.2f}")
+print(f"RMSE (original scale): {rmse_orig:.2f}")
 
 mape = (np.abs((test["y"] - y_pred) / np.where(test["y"] == 0, np.nan, test["y"]))).mean() * 100
 print(f"MAPE: {mape:.2f}%")
