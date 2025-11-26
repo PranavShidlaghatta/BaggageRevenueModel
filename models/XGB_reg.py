@@ -8,7 +8,7 @@ from sklearn.metrics import mean_absolute_error, root_mean_squared_error
 import shap 
 
 
-df = pd.read_csv(r"/home/rayan/Southwest_stuff/BaggageRevenueModel/data/combined_bag_rev_exog.csv")
+df = pd.read_csv(r"/home/rayan/Southwest_stuff/local_stuff /local_data/combined_bag_rev_exog.csv")
 df.drop('Unnamed: 0', axis=1, inplace=True)
 
 # Accounts for right skewed distribution in baggage revenue column
@@ -147,3 +147,38 @@ shap.summary_plot(shap_values, train[feature_cols], plot_type="bar")
 # %%
 shap.summary_plot(shap_values, train[feature_cols])
 
+# %%
+
+import pickle
+
+save_objects = {
+    "best_model": best_model,
+    "grid_search": grid_search,
+    "robust_scaler": robust_scaler,
+    "standard_scaler": scaler,
+    "feature_cols": feature_cols,
+    "feature_cols_no_exog": feature_cols_no_exog,
+    "feature_cols_jetfuel_only": feature_cols_jetfuel_only,
+    "shap_explainer": explainer,
+    "shap_values": shap_values
+}
+
+with open("baggage_rev_xgb_model.pkl", "wb") as f:
+    pickle.dump(save_objects, f)
+
+print("Model + scalers + SHAP saved to baggage_rev_xgb_model.pkl")
+
+
+# %%
+
+import pickle
+
+with open("baggage_rev_xgb_model.pkl", "rb") as f:
+    objs = pickle.load(f)
+
+model = objs["best_model"]
+robust_scaler = objs["robust_scaler"]
+standard_scaler = objs["standard_scaler"]
+feature_cols = objs["feature_cols"]
+
+print("Loaded model and transformers.")
