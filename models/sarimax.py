@@ -11,6 +11,18 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 from sklearn.preprocessing import MinMaxScaler
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
+import pickle
+import os 
+
+def save_pickle(obj, filename, folder="saved_models"):
+    os.makedirs(folder, exist_ok=True)
+    filepath = os.path.join(folder, filename)
+
+    with open (filepath, "wb") as f:
+        pickle.dump(obj, f)
+    
+    print(f"[Model is saved] {filepath}")
+
 
 def load_and_format(path):
     """
@@ -33,11 +45,11 @@ def sarimax_fit(y, exog=None):
         y,
         exogenous=exog,
         start_p=0, start_q=0,
-        max_p=3, max_q=3,
+        max_p=6, max_q=6,
         m=4,                     # quarterly
         seasonal=True,
         start_P=0, start_Q=0,
-        max_P=2, max_Q=2,
+        max_P=3, max_Q=3,
         d=None,                  # let auto_arima pick d
         D=None,                  # let auto_arima pick D
         test="adf",
@@ -102,6 +114,8 @@ def sarimax_no_exog_fit_predict(series, forecast_periods=16,
         m=4,  # Quarterly
         trace=False,  # Disabled to reduce output
         error_action='ignore',
+        max_p=6, max_q=6,
+        max_P=3, max_Q=3,
         suppress_warnings=True,
         stepwise=True,
         information_criterion='aic',
@@ -326,7 +340,7 @@ def check_multicollinearity(exog_df):
 def main():
     # Load data
     df = load_and_format(
-        r'C:\Users\Nav\Documents\BaggageRevenueModels\BaggageRevenueModel\data\combined_bag_revenue_exog.csv'
+        r'/home/rayan/Southwest_stuff/local_stuff /local_data/combined_bag_rev_exog.csv'
     )
 
     airline = 'Southwest'
@@ -360,12 +374,16 @@ def main():
         forecast_periods=forecast_periods,
         plot_title="SARIMAX (No Exogenous Variables)"
     )
+
+
     y_pred_no_exog = forecast_no_exog_df['Forecast'].values
     print(f"\nForecast evaluation for {airline} (no exogenous features):")
     _, _, mape_no_exog = calculate_forecast_metrics(y_test.values, y_pred_no_exog)
 
     # 2. SARIMAX WITH exogenous factors (MinMax scaled)
-    exog_cols = ['jetfuel_cost', 'unemployment_rate', 'GDP']  # adjust if you add more exogenous vars
+    # exog_cols = ['jetfuel_cost', 'unemployment_rate', 'GDP']  # adjust if you add more exogenous vars
+    # just using jet fuel cost for pickled model 
+    exog_cols = ['jetfuel_cost']
     exog_train = airline_df[exog_cols].iloc[:-forecast_periods].dropna()
     exog_test = airline_df[exog_cols].iloc[-forecast_periods:].dropna()
 
@@ -441,7 +459,21 @@ def main():
     )
 
     # 4. CHECK MULTICOLLINEARITY
-    vif_data = check_multicollinearity(exog_train_scaled)
+    if len(exog_cols) > 1: 
+        vif_data = check_multicollinearity(exog_train_scaled)
+    else: 
+        print("\n Skipping VIF, only one exog column")
+        vif_data = None
+
+    # pkl with every object if desired
+    save_pickle({
+        "model_no_exog": model_no_exog,
+        "forecast_no_exog": forecast_no_exog_df,
+        "model_with_exog": sarimax_results_exog,
+        "forecast_with_exog": forecast_exog_df,
+        "exog_stats": exog_stats,
+        "vif_data": vif_data
+    }, "sarimax_models_and_results.pkl")
 
     return (model_no_exog, forecast_no_exog_df), (sarimax_results_exog, forecast_exog_df), exog_stats
 
