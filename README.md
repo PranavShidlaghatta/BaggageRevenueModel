@@ -35,8 +35,13 @@ GDP per Capita of all countries: https://data.worldbank.org/indicator/NY.GDP.PCA
 
 ### models
 
-consists of models in sarimax.py and XBG_reg.py. 
-Final chosen model is sarimax.py. 
+Directly contains models as sarimax.py and XGB_reg.py. 
+
+Run sarimax.py using `python3 sarimax.py`
+
+XGB_reg.py consists of interpreted cells `python3 XGB_reg.py`. It can also be (1) ran as a python file or (2) using CTRL + ENTER on each block separated by `# %%` delimeters 
+(if jupyter extension is downloaded to vscode). 
+
 
 #### models/notebooks 
 
