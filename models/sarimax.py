@@ -340,7 +340,7 @@ def check_multicollinearity(exog_df):
 def main():
     # Load data
     df = load_and_format(
-        r'/home/rayan/Southwest_stuff/local_stuff /local_data/combined_bag_rev_exog.csv'
+        r'/Users/pranavs/Documents/Personal Projects/BaggageRevenueModel/data/combined_bag_revenue_exog.csv'
     )
 
     airline = 'Southwest'
