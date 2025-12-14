@@ -15,7 +15,15 @@ import { ChevronRightIcon } from "@radix-ui/react-icons"
 export function Navigation() {
   const pathname = usePathname()
   const isHome = pathname === '/'
-  const isPredictions = pathname === '/predictions'
+  const isPredictions = pathname === '/predictions' || pathname.startsWith('/predictions/')
+
+  // Get the current page name for breadcrumb
+  let currentPage = 'Predictions'
+  if (pathname === '/predictions/xgboost') {
+    currentPage = 'XGBoost'
+  } else if (pathname === '/predictions/comparison') {
+    currentPage = 'Comparison'
+  }
 
   return (
     <Breadcrumb>
@@ -38,17 +46,35 @@ export function Navigation() {
         <BreadcrumbSeparator>
           <ChevronRightIcon width={16} height={16} className="text-white/40" />
         </BreadcrumbSeparator>
-        <BreadcrumbItem>
-          {isPredictions ? (
+        {pathname === '/predictions' ? (
+          <BreadcrumbItem>
             <BreadcrumbPage className="text-white">Predictions</BreadcrumbPage>
-          ) : (
+          </BreadcrumbItem>
+        ) : pathname.startsWith('/predictions/') ? (
+          <>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link href="/predictions" className="text-white/70 hover:text-white">
+                  Predictions
+                </Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator>
+              <ChevronRightIcon width={16} height={16} className="text-white/40" />
+            </BreadcrumbSeparator>
+            <BreadcrumbItem>
+              <BreadcrumbPage className="text-white">{currentPage}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </>
+        ) : (
+          <BreadcrumbItem>
             <BreadcrumbLink asChild>
               <Link href="/predictions" className="text-white/70 hover:text-white">
                 Predictions
               </Link>
             </BreadcrumbLink>
-          )}
-        </BreadcrumbItem>
+          </BreadcrumbItem>
+        )}
       </BreadcrumbList>
     </Breadcrumb>
   )

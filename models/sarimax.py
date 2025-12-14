@@ -300,6 +300,133 @@ def display_exogenous_pvalues(sarimax_results, exog_cols, airline_name="Southwes
     
     return exog_stats_df
 
+def plot_no_exog_forecast(y_train, y_test, forecast_df, airline_name="Southwest", save_dir="results/plots"):
+    """
+    Plot forecast for SARIMAX model without exogenous variables.
+    
+    Parameters:
+    -----------
+    y_train : pd.Series
+        Training time series data (log-transformed)
+    y_test : pd.Series
+        Test/actual time series data (log-transformed)
+    forecast_df : pd.DataFrame
+        DataFrame with columns: 'Quarter', 'Forecast', 'Lower_CI', 'Upper_CI'
+    airline_name : str
+        Name of airline for filename
+    save_dir : str
+        Directory to save the plot
+    """
+    os.makedirs(save_dir, exist_ok=True)
+    
+    fig, ax = plt.subplots(figsize=(14, 8))
+    
+    # Convert indices to datetime for plotting
+    train_dates = y_train.index.to_timestamp()
+    test_dates = y_test.index.to_timestamp()
+    forecast_dates = pd.to_datetime(forecast_df['Quarter'])
+    
+    # Plot training data
+    ax.plot(train_dates, np.expm1(y_train), 'b-', label='Training Data', linewidth=2)
+    
+    # Plot test/actual data
+    ax.plot(test_dates, np.expm1(y_test), 'g-', label='Actual (Test)', linewidth=2, marker='o', markersize=6)
+    
+    # Plot forecast
+    ax.plot(forecast_dates, np.expm1(forecast_df['Forecast']), 'r--', 
+            label='Forecast', linewidth=2, marker='s', markersize=6)
+    
+    # Plot confidence intervals
+    ax.fill_between(forecast_dates, 
+                    np.expm1(forecast_df['Lower_CI']), 
+                    np.expm1(forecast_df['Upper_CI']),
+                    alpha=0.3, color='red', label='95% Confidence Interval')
+    
+    # Add vertical line to separate train/test
+    ax.axvline(x=test_dates[0], color='gray', linestyle=':', linewidth=1.5, 
+               label='Train/Test Split')
+    
+    ax.set_xlabel('Quarter', fontsize=12, fontweight='bold')
+    ax.set_ylabel('Baggage Revenue (Original Scale)', fontsize=12, fontweight='bold')
+    ax.set_title(f'SARIMAX (No Exogenous Variables) - {airline_name}', fontsize=14, fontweight='bold')
+    ax.legend(loc='best', fontsize=10)
+    ax.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    
+    filename = os.path.join(save_dir, f'{airline_name}_no_exog_forecast.png')
+    plt.savefig(filename, dpi=300, bbox_inches='tight')
+    print(f"\n[Plot saved] {filename}")
+    plt.show()
+
+
+def plot_exog_forecast(y_train, y_test, forecast_df, airline_name="Southwest", 
+                       exog_cols=None, save_dir="results/plots"):
+    """
+    Plot forecast for SARIMAX model with exogenous variables.
+    
+    Parameters:
+    -----------
+    y_train : pd.Series
+        Training time series data (log-transformed, aligned with exog)
+    y_test : pd.Series
+        Test/actual time series data (log-transformed, aligned with exog)
+    forecast_df : pd.DataFrame
+        DataFrame with columns: 'Quarter', 'Forecast', 'Lower_CI', 'Upper_CI'
+    airline_name : str
+        Name of airline for filename
+    exog_cols : list, optional
+        List of exogenous variable names for title
+    save_dir : str
+        Directory to save the plot
+    """
+    os.makedirs(save_dir, exist_ok=True)
+    
+    fig, ax = plt.subplots(figsize=(14, 8))
+    
+    # Convert indices to datetime for plotting
+    train_dates = y_train.index.to_timestamp()
+    test_dates = y_test.index.to_timestamp()
+    forecast_dates = pd.to_datetime(forecast_df['Quarter'])
+    
+    # Plot training data
+    ax.plot(train_dates, np.expm1(y_train), 'b-', label='Training Data', linewidth=2)
+    
+    # Plot test/actual data
+    ax.plot(test_dates, np.expm1(y_test), 'g-', label='Actual (Test)', linewidth=2, marker='o', markersize=6)
+    
+    # Plot forecast
+    ax.plot(forecast_dates, np.expm1(forecast_df['Forecast']), 'r--', 
+            label='Forecast', linewidth=2, marker='s', markersize=6)
+    
+    # Plot confidence intervals
+    ax.fill_between(forecast_dates, 
+                    np.expm1(forecast_df['Lower_CI']), 
+                    np.expm1(forecast_df['Upper_CI']),
+                    alpha=0.3, color='red', label='95% Confidence Interval')
+    
+    # Add vertical line to separate train/test
+    ax.axvline(x=test_dates[0], color='gray', linestyle=':', linewidth=1.5, 
+               label='Train/Test Split')
+    
+    # Create title with exogenous variables
+    exog_str = f" with {', '.join(exog_cols)}" if exog_cols else ""
+    title = f'SARIMAX (With Exogenous Variables{exog_str}) - {airline_name}'
+    
+    ax.set_xlabel('Quarter', fontsize=12, fontweight='bold')
+    ax.set_ylabel('Baggage Revenue (Original Scale)', fontsize=12, fontweight='bold')
+    ax.set_title(title, fontsize=14, fontweight='bold')
+    ax.legend(loc='best', fontsize=10)
+    ax.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    
+    filename = os.path.join(save_dir, f'{airline_name}_exog_forecast.png')
+    plt.savefig(filename, dpi=300, bbox_inches='tight')
+    print(f"\n[Plot saved] {filename}")
+    plt.show()
+
+
 def check_multicollinearity(exog_df):
     """
     Calculate VIF for each exogenous variable to detect multicollinearity.
@@ -379,11 +506,19 @@ def main():
     y_pred_no_exog = forecast_no_exog_df['Forecast'].values
     print(f"\nForecast evaluation for {airline} (no exogenous features):")
     _, _, mape_no_exog = calculate_forecast_metrics(y_test.values, y_pred_no_exog)
+    
+    # Plot forecast for no-exog model
+    plot_no_exog_forecast(
+        y_train=y_train,
+        y_test=y_test,
+        forecast_df=forecast_no_exog_df,
+        airline_name=airline
+    )
 
     # 2. SARIMAX WITH exogenous factors (MinMax scaled)
     # exog_cols = ['jetfuel_cost', 'unemployment_rate', 'GDP']  # adjust if you add more exogenous vars
     # just using jet fuel cost for pickled model 
-    exog_cols = ['jetfuel_cost']
+    exog_cols = ['jetfuel_cost', 'unemployment_rate', 'GDP']
     exog_train = airline_df[exog_cols].iloc[:-forecast_periods].dropna()
     exog_test = airline_df[exog_cols].iloc[-forecast_periods:].dropna()
 
@@ -449,6 +584,15 @@ def main():
         'Lower_CI': confint.iloc[:, 0].values,
         'Upper_CI': confint.iloc[:, 1].values
     })
+    
+    # Plot forecast for exog model
+    plot_exog_forecast(
+        y_train=y_train_aligned,
+        y_test=y_test_aligned,
+        forecast_df=forecast_exog_df,
+        airline_name=airline,
+        exog_cols=exog_cols
+    )
 
     # 3. DISPLAY P-VALUES
     exog_stats = display_exogenous_pvalues(
